@@ -5,6 +5,7 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <sys/_endian.h>
+#include <sys/_types/_ssize_t.h>
 #include <sys/socket.h>
 #include <unistd.h>
 
@@ -31,11 +32,14 @@ void Server::listen(int port) {
 
   while (true) {
     int clientFd = accept(serverFd, nullptr, nullptr);
-    if (clientFd < 0) {
-      std::cerr << "accept failed\n";
-      continue;
+    char buffer[4096];
+
+    ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
+
+    if (bytesRead > 0) {
+      std::cout.write(buffer, bytesRead);
     }
-    std::cout << "Client connected" << '\n';
+    close(clientFd);
   }
 }
 
