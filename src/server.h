@@ -15,9 +15,10 @@ private:
   void closeServer();
   static std::atomic<bool> serverRunning;
   static void signalHandler(int);
+  void handle_headers(const std::string &headers, Request &req);
 
 public:
   void listen(int port);
-  void get(std::string path, Handler handler);
+  void get(const std::string &path, Handler handler);
   ~Server();
 };

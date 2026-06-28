@@ -10,6 +10,7 @@
 #include <iostream>
 #include <netinet/in.h>
 #include <sstream>
+#include <string>
 #include <sys/_endian.h>
 #include <sys/_types/_ssize_t.h>
 #include <sys/signal.h>
@@ -65,32 +66,38 @@ void Server::listen(int port) {
 
 void Server::closeServer() { close(serverFd); }
 
-void Server::get(std::string path, Handler handler) {
+void Server::get(const std::string &path, Handler handler) {
   getRoutes[path] = handler;
 }
 
 Request Server::parseRequest(int clientFd) {
   char buffer[4096];
-
-  ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
-  if (bytesRead <= 0) {
-    return {};
+  size_t delimiter_pos = std::string::npos;
+  std::string request;
+  while (delimiter_pos == std::string::npos) {
+    ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
+    if (bytesRead <= 0) {
+      return {};
+    }
+    request.append(buffer, bytesRead);
+    delimiter_pos = request.find("\r\n\r\n");
   }
-
-  std::string request(buffer, bytesRead);
-
-  std::istringstream stream(request);
-  std::string method;
-  std::string path;
-  std::string version;
-
-  stream >> method >> path >> version;
-  std::cout << "method:" << method << '\n'
-            << "path:" << path << '\n'
-            << "version:" << version << '\n';
+  std::string headers = request.substr(0, delimiter_pos);
+  std::string body_leftover = request.substr(delimiter_pos + 4);
   Request req;
-  req.method = method;
-  req.path = path;
+  handle_headers(headers, req);
+  req.body = body_leftover;
+  auto it = req.headers.find("Content-Length");
+  if (it != req.headers.end()) {
+    size_t contentLength = std::stoul(it->second);
+    while (contentLength > req.body.size()) {
+      ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
+      if (bytesRead <= 0) {
+        return {};
+      }
+      req.body.append(buffer, bytesRead);
+    }
+  }
   return req;
 }
 
@@ -100,5 +107,29 @@ void Server::dispatch(Request &req, Response &res) {
     route->second(req, res);
   } else
     res.send("404");
+}
+void Server::handle_headers(const std::string &headers, Request &req) {
+  std::istringstream stream(headers);
+  std::string line;
+  std::getline(stream, line);
+  std::istringstream requestLine(line);
+  requestLine >> req.method >> req.path >> req.version;
+  std::cout << "method:" << req.method << '\n'
+            << "path:" << req.path << '\n'
+            << "version:" << req.version << '\n';
+  while (std::getline(stream, line)) {
+    if (!line.empty() && line.back() == '\r') {
+      line.pop_back();
+    }
+    auto colon = line.find(":");
+    if (colon == std::string::npos) {
+      continue;
+    }
+    std::string key = line.substr(0, colon);
+    std::string value = line.substr(colon + 1);
+    while (!value.empty() && value.front() == ' ')
+      value.erase(0, 1);
+    req.headers[key] = value;
+  }
 }
 Server::~Server() { closeServer(); }
