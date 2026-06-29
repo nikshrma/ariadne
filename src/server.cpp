@@ -66,10 +66,6 @@ void Server::listen(int port) {
 
 void Server::closeServer() { close(serverFd); }
 
-void Server::get(const std::string &path, Handler handler) {
-  getRoutes[path] = handler;
-}
-
 Request Server::parseRequest(int clientFd) {
   char buffer[4096];
   size_t delimiter_pos = std::string::npos;
@@ -102,11 +98,45 @@ Request Server::parseRequest(int clientFd) {
 }
 
 void Server::dispatch(Request &req, Response &res) {
-  auto route = getRoutes.find(req.path);
-  if (route != getRoutes.end()) {
-    route->second(req, res);
-  } else
-    res.send("404");
+  auto method = req.method;
+  if (method == "GET") {
+    auto route = getRoutes.find(req.path);
+    if (route != getRoutes.end()) {
+      route->second(req, res);
+    } else
+      res.send("404");
+  } else if (method == "POST") {
+    auto route = postRoutes.find(req.path);
+    if (route != postRoutes.end()) {
+      route->second(req, res);
+    } else
+      res.send("404");
+  } else if (method == "PUT") {
+    auto route = putRoutes.find(req.path);
+    if (route != putRoutes.end()) {
+      route->second(req, res);
+    } else
+      res.send("404");
+  } else if (method == "DELETE") {
+    auto route = removeRoutes.find(req.path);
+    if (route != removeRoutes.end()) {
+      route->second(req, res);
+    } else
+      res.send("404");
+  }
+}
+
+void Server::get(const std::string &path, Handler handler) {
+  getRoutes[path] = handler;
+}
+void Server::post(const std::string &path, Handler handler) {
+  postRoutes[path] = handler;
+}
+void Server::put(const std::string &path, Handler handler) {
+  putRoutes[path] = handler;
+}
+void Server::remove(const std::string &path, Handler handler) {
+  removeRoutes[path] = handler;
 }
 void Server::handle_headers(const std::string &headers, Request &req) {
   std::istringstream stream(headers);

@@ -10,6 +10,9 @@ private:
   int serverFd;
   using Handler = std::function<void(Request &, Response &)>;
   std::unordered_map<std::string, Handler> getRoutes;
+  std::unordered_map<std::string, Handler> postRoutes;
+  std::unordered_map<std::string, Handler> putRoutes;
+  std::unordered_map<std::string, Handler> removeRoutes;
   Request parseRequest(int clientFd);
   void dispatch(Request &, Response &);
   void closeServer();
@@ -20,5 +23,8 @@ private:
 public:
   void listen(int port);
   void get(const std::string &path, Handler handler);
+  void put(const std::string &path, Handler handler);
+  void post(const std::string &path, Handler handler);
+  void remove(const std::string &path, Handler handler);
   ~Server();
 };
