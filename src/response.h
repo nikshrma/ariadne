@@ -4,8 +4,10 @@
 class Response {
 private:
   int clientFd;
+  int statusCode;
 
 public:
   Response(int clientFd);
   void send(const std::string &body);
+  Response &status(int st);
 };
