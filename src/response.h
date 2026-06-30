@@ -14,4 +14,5 @@ public:
   void send(const std::string &body);
   Response &status(int st);
   Response &set(const std::string &key, const std::string &value);
+  void json(const std::string &body);
 };
