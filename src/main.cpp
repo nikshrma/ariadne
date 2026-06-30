@@ -4,12 +4,8 @@
 int main() {
   Server server;
 
-  server.get("/", [](Request &req, Response &res) {
-    res.status(200)
-        .set("Content-Type", "text/plain")
-        .set("X-Powered-By", "Ariadne")
-        .send("Ariadne says hi!");
-  });
+  server.get("/users/:id",
+             [](Request &req, Response &res) { res.send(req.params["id"]); });
 
   server.listen(3000);
 }

@@ -9,8 +9,10 @@
 #include <cstring>
 #include <iostream>
 #include <netinet/in.h>
+#include <ranges>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <sys/_endian.h>
 #include <sys/_types/_ssize_t.h>
 #include <sys/signal.h>
@@ -96,6 +98,65 @@ Request Server::parseRequest(int clientFd) {
   }
   return req;
 }
+inline std::string_view to_sv(auto&& rng) {
+  return std::string_view(rng.begin(), rng.end());
+}
+
+bool matchRoutes(const std::string &pattern, const std::string &path,
+                 Request &req, Response &res) {
+
+  auto patternSegments = pattern | std::views::split('/');
+  auto pathSegments = path | std::views::split('/');
+  auto it1 = patternSegments.begin();
+  auto it2 = pathSegments.begin();
+
+  std::unordered_map<std::string, std::string> tempParams;
+
+  while (it1 != patternSegments.end() && it2 != pathSegments.end()) {
+    auto sv1 = to_sv(*it1);
+    auto sv2 = to_sv(*it2);
+
+    if (sv1.empty()) {
+      ++it1;
+      continue;
+    }
+    if (sv2.empty()) {
+      ++it2;
+      continue;
+    }
+
+    if (sv1 == sv2) {
+      ++it1;
+      ++it2;
+      continue;
+    } else if (sv1[0] == ':') {
+      std::string paramName = std::string(sv1.substr(1));
+      tempParams[paramName] = std::string(sv2);
+    } else {
+      return false;
+    }
+
+    ++it1;
+    ++it2;
+  }
+
+  while (it1 != patternSegments.end() && to_sv(*it1).empty()) {
+    ++it1;
+  }
+  while (it2 != pathSegments.end() && to_sv(*it2).empty()) {
+    ++it2;
+  }
+
+  if (it1 != patternSegments.end() || it2 != pathSegments.end()) {
+    return false;
+  }
+
+  for (const auto &[key, val] : tempParams) {
+    req.params[key] = val;
+  }
+
+  return true;
+}
 
 void Server::dispatch(Request &req, Response &res) {
   auto methodIt = routes.find(req.method);
@@ -103,12 +164,13 @@ void Server::dispatch(Request &req, Response &res) {
     res.status(405).send("Method Not Allowed");
     return;
   }
-  auto route = methodIt->second.find(req.path);
-  if (route != methodIt->second.end()) {
-    route->second(req, res);
-  } else {
-    res.status(404).send("Not Found");
+  for (auto &[pattern, handler] : methodIt->second) {
+    if (matchRoutes(pattern, req.path, req, res)) {
+      handler(req, res);
+      return;
+    }
   }
+  res.status(405).send("Not Found");
 }
 
 void Server::get(const std::string &path, Handler handler) {

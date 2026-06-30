@@ -11,10 +11,6 @@ private:
   using Handler = std::function<void(Request &, Response &)>;
   std::unordered_map<std::string, std::unordered_map<std::string, Handler>>
       routes;
-  std::unordered_map<std::string, Handler> getRoutes;
-  std::unordered_map<std::string, Handler> postRoutes;
-  std::unordered_map<std::string, Handler> putRoutes;
-  std::unordered_map<std::string, Handler> removeRoutes;
   Request parseRequest(int clientFd);
   void dispatch(Request &, Response &);
   void closeServer();
