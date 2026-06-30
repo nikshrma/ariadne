@@ -10,16 +10,32 @@ Response &Response::status(int st) {
   statusCode = st;
   return *this;
 }
+Response &Response::set(const std::string &key, const std::string &value) {
+  std::string trimmed = value;
+
+  while (!trimmed.empty() && trimmed.front() == ' ')
+    trimmed.erase(0, 1);
+
+  headers[key] = trimmed;
+  headers[key] = trimmed;
+  return *this;
+}
 void Response::send(const std::string &body) {
+  // first line
   std::string response = "HTTP/1.1 " + std::to_string(statusCode) + " " +
-                         getStatusPhrase() +
-                         "\r\n"
-                         "Content-Length: " +
-                         std::to_string(body.size()) + "\r\n\r\n" + body;
+                         getStatusPhrase() + "\r\n";
+  // headers
+  for (const auto &[key, value] : headers) {
+    response = response + key + ": " + value + "\r\n";
+  }
+  // last header
+  response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
+  // headers end + body
+  response += "\r\n" + body;
   ::send(clientFd, response.c_str(), response.size(), 0);
 }
 Response::Response(int clientFd) : clientFd(clientFd), statusCode(200) {}
-std::string Response::getStatusPhrase() {
+std::string Response::getStatusPhrase() const {
   switch (statusCode) {
   case 200:
     return "OK";

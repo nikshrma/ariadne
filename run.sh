@@ -1,4 +1,4 @@
 #!/bin/bash
 
-g++ src/*.cpp -o ariadne
+g++ -std=c++20 src/*.cpp -o ariadne
 ./ariadne

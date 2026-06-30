@@ -3,12 +3,13 @@
 #include "server.h"
 int main() {
   Server server;
-  server.get("/",
-             [](Request &req, Response &res) { res.send("this is home"); });
-  server.post("/", [](Request &req, Response &res) { res.send("Post home"); });
-  server.remove("/", [](Request &req, Response &res) {
-    res.status(500).send("Delete home");
+
+  server.get("/", [](Request &req, Response &res) {
+    res.status(200)
+        .set("Content-Type", "text/plain")
+        .set("X-Powered-By", "Ariadne")
+        .send("Ariadne says hi!");
   });
-  server.put("/", [](Request &req, Response &res) { res.send("Put home"); });
+
   server.listen(3000);
 }
