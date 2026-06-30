@@ -5,6 +5,7 @@ class Response {
 private:
   int clientFd;
   int statusCode;
+  std::string getStatusPhrase();
 
 public:
   Response(int clientFd);
