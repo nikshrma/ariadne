@@ -98,45 +98,30 @@ Request Server::parseRequest(int clientFd) {
 }
 
 void Server::dispatch(Request &req, Response &res) {
-  auto method = req.method;
-  if (method == "GET") {
-    auto route = getRoutes.find(req.path);
-    if (route != getRoutes.end()) {
-      route->second(req, res);
-    } else
-      res.send("404");
-  } else if (method == "POST") {
-    auto route = postRoutes.find(req.path);
-    if (route != postRoutes.end()) {
-      route->second(req, res);
-    } else
-      res.send("404");
-  } else if (method == "PUT") {
-    auto route = putRoutes.find(req.path);
-    if (route != putRoutes.end()) {
-      route->second(req, res);
-    } else
-      res.send("404");
-  } else if (method == "DELETE") {
-    auto route = removeRoutes.find(req.path);
-    if (route != removeRoutes.end()) {
-      route->second(req, res);
-    } else
-      res.send("404");
+  auto methodIt = routes.find(req.method);
+  if (methodIt == routes.end()) {
+    res.status(405).send("Method Not Allowed");
+    return;
+  }
+  auto route = methodIt->second.find(req.path);
+  if (route != methodIt->second.end()) {
+    route->second(req, res);
+  } else {
+    res.status(404).send("Not Found");
   }
 }
 
 void Server::get(const std::string &path, Handler handler) {
-  getRoutes[path] = handler;
+  routes["GET"][path] = handler;
 }
 void Server::post(const std::string &path, Handler handler) {
-  postRoutes[path] = handler;
+  routes["POST"][path] = handler;
 }
 void Server::put(const std::string &path, Handler handler) {
-  putRoutes[path] = handler;
+  routes["PUT"][path] = handler;
 }
 void Server::remove(const std::string &path, Handler handler) {
-  removeRoutes[path] = handler;
+  routes["DELETE"][path] = handler;
 }
 void Server::handle_headers(const std::string &headers, Request &req) {
   std::istringstream stream(headers);

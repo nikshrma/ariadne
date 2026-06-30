@@ -34,6 +34,13 @@ void Response::send(const std::string &body) {
   response += "\r\n" + body;
   ::send(clientFd, response.c_str(), response.size(), 0);
 }
+void Response::json(const std::string &body) {
+  if (headers.find("Content-Type") == headers.end())
+    set("Content-Type", "application/json");
+
+  send(body);
+  send(body);
+}
 Response::Response(int clientFd) : clientFd(clientFd), statusCode(200) {}
 std::string Response::getStatusPhrase() const {
   switch (statusCode) {

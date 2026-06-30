@@ -9,6 +9,8 @@ class Server {
 private:
   int serverFd;
   using Handler = std::function<void(Request &, Response &)>;
+  std::unordered_map<std::string, std::unordered_map<std::string, Handler>>
+      routes;
   std::unordered_map<std::string, Handler> getRoutes;
   std::unordered_map<std::string, Handler> postRoutes;
   std::unordered_map<std::string, Handler> putRoutes;
