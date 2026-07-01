@@ -14,8 +14,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <sys/_endian.h>
-#include <sys/_types/_ssize_t.h>
 #include <sys/signal.h>
 #include <sys/socket.h>
 #include <thread>
