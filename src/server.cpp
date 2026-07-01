@@ -1,6 +1,7 @@
 #include "server.h"
 #include "request.h"
 #include "response.h"
+#include "threadpool.h"
 #include <arpa/inet.h>
 #include <atomic>
 #include <cerrno>
@@ -17,6 +18,7 @@
 #include <sys/_types/_ssize_t.h>
 #include <sys/signal.h>
 #include <sys/socket.h>
+#include <thread>
 #include <unistd.h>
 #include <utility>
 
@@ -50,6 +52,7 @@ void Server::listen(int port) {
     return;
   }
   std::cout << "listening on port -> " << port << '\n';
+  ThreadPool pool(std::thread::hardware_concurrency());
 
   while (serverRunning) {
     int clientFd = accept(serverFd, nullptr, nullptr);
@@ -60,10 +63,12 @@ void Server::listen(int port) {
       perror("accept");
       break;
     }
-    Request req = parseRequest(clientFd);
-    Response res(clientFd);
-    executeMiddlewares(0, req, res);
-    close(clientFd);
+    pool.enqueue([this, clientFd] {
+      Request req = parseRequest(clientFd);
+      Response res(clientFd);
+      executeMiddlewares(0, req, res);
+      close(clientFd);
+    });
   }
 }
 

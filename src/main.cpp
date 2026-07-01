@@ -2,37 +2,14 @@
 #include "response.h"
 #include "server.h"
 #include <iostream>
-
+#include <thread>
 int main() {
   Server app;
 
-  app.use([](Request &req, Response &res, Server::Next next) {
-    std::cout << "[Logger] " << req.method << " " << req.path << '\n';
-    next();
-  });
-
-  app.use([](Request &req, Response &res, Server::Next next) {
-    res.status(401).send("Unauthorized");
-  });
-
-  app.use([](Request &req, Response &res, Server::Next next) {
-    std::cout << "[Middleware 3]\n";
-    next();
-  });
-
   app.get("/", [](Request &req, Response &res) {
-    std::cout << "[Handler]\n";
-    res.send("Home");
-  });
-
-  app.get("/users/:id", [](Request &req, Response &res) {
-    std::cout << "[Handler]\n";
-    res.send("User ID = " + req.params["id"]);
-  });
-
-  app.post("/login", [](Request &req, Response &res) {
-    std::cout << "[Handler]\n";
-    res.status(201).json(R"({"success":true})");
+    std::cout << std::this_thread::get_id() << '\n';
+    std::this_thread::sleep_for(std::chrono::seconds(3));
+    res.send("Done");
   });
 
   app.listen(3000);
