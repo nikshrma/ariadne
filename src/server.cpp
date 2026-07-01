@@ -18,6 +18,7 @@
 #include <sys/signal.h>
 #include <sys/socket.h>
 #include <unistd.h>
+#include <utility>
 
 std::atomic<bool> Server::serverRunning{true};
 void Server::signalHandler(int signal) { serverRunning = false; }
@@ -61,7 +62,7 @@ void Server::listen(int port) {
     }
     Request req = parseRequest(clientFd);
     Response res(clientFd);
-    dispatch(req, res);
+    executeMiddlewares(0, req, res);
     close(clientFd);
   }
 }
@@ -98,7 +99,18 @@ Request Server::parseRequest(int clientFd) {
   }
   return req;
 }
-inline std::string_view to_sv(auto&& rng) {
+void Server::use(Middleware middleware) {
+  middlewares.push_back(std::move(middleware));
+}
+void Server::executeMiddlewares(int index, Request &req, Response &res) {
+  if (index == middlewares.size()) {
+    dispatch(req, res);
+    return;
+  } else
+    middlewares[index](
+        req, res, [&, index]() { executeMiddlewares(index + 1, req, res); });
+}
+inline std::string_view to_sv(auto &&rng) {
   return std::string_view(rng.begin(), rng.end());
 }
 
