@@ -8,14 +8,22 @@ void loggerMiddleware(Request &req, Response &res, Server::Next next) {
   // '\n';
   next();
 }
+long fib(int n) {
+  if (n <= 1)
+    return n;
+  return fib(n - 1) + fib(n - 2);
+}
 
 int main() {
   Server app;
 
   app.use(loggerMiddleware);
-
   app.get("/", [](Request &req, Response &res) {
     res.status(200).send("Hello from GET!");
+  });
+  app.get("/api/compute", [](Request &req, Response &res) {
+    long result = fib(30);
+    res.status(200).json(R"({"result": )" + std::to_string(result) + "}");
   });
 
   app.post("/submit", [](Request &req, Response &res) {

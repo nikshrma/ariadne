@@ -1,10 +1,18 @@
 const express = require("express");
 const app = express();
 
+function fib(n) {
+  if (n <= 1) return n;
+  return fib(n - 1) + fib(n - 2);
+}
 app.use(express.text());
 app.use((req, res, next) => {
   // console.log(`Received ${req.method} request to ${req.path}`);
   next();
+});
+app.get("/api/compute", (req, res) => {
+  const result = fib(30);
+  res.json({ result });
 });
 
 app.get("/", (req, res) => {

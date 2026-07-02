@@ -7,6 +7,13 @@ import (
 	"net/http"
 )
 
+func fib(n int) int {
+	if n <= 1 {
+		return n
+	}
+	return fib(n-1) + fib(n-2)
+}
+
 func loggerMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// fmt.Printf("Received %s request to %s\n", r.Method, r.URL.Path)
@@ -37,6 +44,13 @@ func main() {
 	mux.HandleFunc("GET /error", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte("Internal server error"))
+	})
+
+	mux.HandleFunc("GET /api/compute", func(w http.ResponseWriter, r *http.Request) {
+		result := fib(30)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		fmt.Fprintf(w, `{"result": %d}`, result)
 	})
 
 	handler := loggerMiddleware(mux)
