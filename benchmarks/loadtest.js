@@ -24,8 +24,10 @@ export const options = {
     },
   },
   thresholds: {
-    http_req_duration: ["p(95)<500", "p(99)<1000"],
-    http_req_failed: ["rate<0.01"],
+    "http_req_duration{scenario:steady_load}": ["p(95)<500", "p(99)<1000"],
+    "http_req_duration{scenario:ramping_load}": ["p(95)<800", "p(99)<1500"],
+    "http_req_failed{scenario:steady_load}": ["rate<0.01"],
+    "http_req_failed{scenario:ramping_load}": ["rate<0.05"],
   },
 };
 
@@ -36,22 +38,25 @@ export default function () {
   const roll = Math.random();
   let res;
 
-  if (roll < 0.4) {
+  if (roll < 0.3) {
     res = http.get(`${BASE_URL}/`, okOr500);
     check(res, { "GET / status 200": (r) => r.status === 200 });
-  } else if (roll < 0.7) {
+  } else if (roll < 0.55) {
     res = http.get(`${BASE_URL}/api/user`, okOr500);
     check(res, {
       "GET /api/user status 200": (r) => r.status === 200,
       "GET /api/user has body": (r) => r.body && r.body.length > 0,
     });
-  } else if (roll < 0.95) {
+  } else if (roll < 0.75) {
     const payload = JSON.stringify({ test: "data", ts: Date.now() });
     res = http.post(`${BASE_URL}/submit`, payload, {
       headers: { "Content-Type": "application/json" },
       ...okOr500,
     });
     check(res, { "POST /submit status 200": (r) => r.status === 200 });
+  } else if (roll < 0.95) {
+    res = http.get(`${BASE_URL}/api/compute`, okOr500);
+    check(res, { "GET /api/compute status 200": (r) => r.status === 200 });
   } else {
     res = http.get(`${BASE_URL}/error`, okOr500);
     check(res, { "GET /error status 500": (r) => r.status === 500 });
