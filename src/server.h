@@ -3,6 +3,7 @@
 #include "response.h"
 #include <atomic>
 #include <functional>
+#include <optional>
 #include <unordered_map>
 
 class Server {
@@ -23,7 +24,7 @@ private:
   std::vector<Middleware> middlewares;
   std::unordered_map<std::string, std::unordered_map<std::string, Handler>>
       routes;
-  Request parseRequest(int clientFd);
+  std::optional<Request> parseRequest(int clientFd);
   void dispatch(Request &, Response &);
   void closeServer();
   static std::atomic<bool> serverRunning;

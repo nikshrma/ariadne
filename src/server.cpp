@@ -10,6 +10,7 @@
 #include <cstring>
 #include <iostream>
 #include <netinet/in.h>
+#include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
@@ -50,10 +51,14 @@ void Server::listen(int port) {
     return;
   }
   std::cout << "listening on port -> " << port << '\n';
-  ThreadPool pool(std::thread::hardware_concurrency());
+  ThreadPool pool(250);
 
   while (serverRunning) {
     int clientFd = accept(serverFd, nullptr, nullptr);
+#ifdef __APPLE__
+    int set = 1;
+    setsockopt(clientFd, SOL_SOCKET, SO_NOSIGPIPE, &set, sizeof(set));
+#endif
     if (clientFd == -1) {
       if (errno == EINTR) {
         continue;
@@ -61,10 +66,33 @@ void Server::listen(int port) {
       perror("accept");
       break;
     }
+    struct timeval tv{5, 0};
+    setsockopt(clientFd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
     pool.enqueue([this, clientFd] {
-      Request req = parseRequest(clientFd);
-      Response res(clientFd);
-      executeMiddlewares(0, req, res);
+      while (true) {
+        try {
+          auto req = parseRequest(clientFd);
+          if (!req)
+            break;
+          Response res(clientFd);
+          bool keepAlive = true;
+          auto it = req->headers.find("Connection");
+          if (it != req->headers.end() && it->second == "close") {
+            keepAlive = false;
+          }
+          if (keepAlive)
+            res.set("Connection", "keep-alive");
+          else
+            res.set("Connection", "close");
+          executeMiddlewares(0, *req, res);
+          if (!keepAlive)
+            break;
+        } catch (const std::exception &e) {
+          Response res(clientFd);
+          res.status(400).send("Bad Request");
+          break;
+        }
+      }
       close(clientFd);
     });
   }
@@ -72,14 +100,14 @@ void Server::listen(int port) {
 
 void Server::closeServer() { close(serverFd); }
 
-Request Server::parseRequest(int clientFd) {
+std::optional<Request> Server::parseRequest(int clientFd) {
   char buffer[4096];
   size_t delimiter_pos = std::string::npos;
   std::string request;
   while (delimiter_pos == std::string::npos) {
     ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
     if (bytesRead <= 0) {
-      return {};
+      return std::nullopt;
     }
     request.append(buffer, bytesRead);
     delimiter_pos = request.find("\r\n\r\n");
@@ -95,7 +123,7 @@ Request Server::parseRequest(int clientFd) {
     while (contentLength > req.body.size()) {
       ssize_t bytesRead = recv(clientFd, buffer, sizeof(buffer), 0);
       if (bytesRead <= 0) {
-        return {};
+        return std::nullopt;
       }
       req.body.append(buffer, bytesRead);
     }
