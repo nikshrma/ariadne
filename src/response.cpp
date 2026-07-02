@@ -32,13 +32,16 @@ void Response::send(const std::string &body) {
   response += "Content-Length: " + std::to_string(body.size()) + "\r\n";
   // headers end + body
   response += "\r\n" + body;
+#ifdef __linux__
+  ::send(clientFd, response.c_str(), response.size(), MSG_NOSIGNAL);
+#else
   ::send(clientFd, response.c_str(), response.size(), 0);
+#endif
 }
 void Response::json(const std::string &body) {
   if (headers.find("Content-Type") == headers.end())
     set("Content-Type", "application/json");
 
-  send(body);
   send(body);
 }
 Response::Response(int clientFd) : clientFd(clientFd), statusCode(200) {}
