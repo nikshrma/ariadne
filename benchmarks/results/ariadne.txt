@@ -1,0 +1,29 @@
+ █ TOTAL RESULTS
+
+    checks_total.......: 286148  953.658581/s
+    checks_succeeded...: 100.00% 286148 out of 286148
+    checks_failed......: 0.00%   0 out of 286148
+
+    ✓ POST /submit status 200
+    ✓ GET / status 200
+    ✓ GET /error status 500
+    ✓ GET /api/user status 200
+    ✓ GET /api/user has body
+CUSTOM
+    custom_latency.................: avg=7.751085 min=0.136   med=6.121    max=56.099   p(90)=15.75    p(95)=18.277
+
+    HTTP
+    http_req_duration..............: avg=7.75ms   min=136µs   med=6.12ms   max=56.09ms  p(90)=15.75ms  p(95)=18.27ms
+      { expected_response:true }...: avg=7.75ms   min=136µs   med=6.12ms   max=56.09ms  p(90)=15.75ms  p(95)=18.27ms
+      { scenario:ramping_load }....: avg=8.92ms   min=147µs   med=8.2ms    max=56.09ms  p(90)=16.89ms  p(95)=19.34ms
+      { scenario:steady_load }.....: avg=4.54ms   min=136µs   med=4.2ms    max=18.55ms  p(90)=7.57ms   p(95)=8.84ms
+    http_req_failed................: 0.00%  0 out of 212227
+      { scenario:ramping_load }....: 0.00%  0 out of 155242
+      { scenario:steady_load }.....: 0.00%  0 out of 56985
+    http_reqs......................: 212227 707.29867/s
+
+    EXECUTION
+    iteration_duration.............: avg=109.44ms min=100.2ms med=107.19ms max=160.16ms p(90)=119.14ms p(95)=122.9ms
+    iterations.....................: 212227 707.29867/s
+    vus............................: 1      min=0           max=200
+    vus_max........................: 200    min=200         max=200

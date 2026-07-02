@@ -1,0 +1,41 @@
+ TOTAL RESULTS
+
+    checks_total.......: 280538  934.990741/s
+    checks_succeeded...: 100.00% 280538 out of 280538
+    checks_failed......: 0.00%   0 out of 280538
+
+    ✓ GET /api/user status 200
+    ✓ GET / status 200
+    ✓ GET /api/user has body
+    ✓ POST /submit status 200
+    ✓ GET /error status 500
+
+    CUSTOM
+    custom_latency.................: avg=6.623842 min=0.138   med=5.398    max=31.154   p(90)=13.585   p(95)=16.08195
+
+    HTTP
+    http_req_duration..............: avg=6.62ms   min=138µs   med=5.39ms   max=31.15ms  p(90)=13.58ms  p(95)=16.08ms
+      { expected_response:true }...: avg=6.62ms   min=138µs   med=5.39ms   max=31.15ms  p(90)=13.58ms  p(95)=16.08ms
+      { scenario:ramping_load }....: avg=7.2ms    min=138µs   med=6.02ms   max=31.15ms  p(90)=14.61ms  p(95)=16.92ms
+      { scenario:steady_load }.....: avg=4.99ms   min=163µs   med=4.57ms   max=24.15ms  p(90)=8.31ms   p(95)=9.72ms
+    http_req_failed................: 0.00%  0 out of 215782
+      { scenario:ramping_load }....: 0.00%  0 out of 159098
+      { scenario:steady_load }.....: 0.00%  0 out of 56684
+    http_reqs......................: 215782 719.168783/s
+
+    EXECUTION
+    iteration_duration.............: avg=107.64ms min=100.2ms med=106.17ms max=140.45ms p(90)=115.18ms p(95)=118.09ms
+    iterations.....................: 215782 719.168783/s
+    vus............................: 1      min=0           max=200
+    vus_max........................: 200    min=200         max=200
+
+    NETWORK
+    data_received..................: 32 MB  105 kB/s
+    data_sent......................: 21 MB  69 kB/s
+
+
+
+
+running (5m00.0s), 000/200 VUs, 215782 complete and 0 interrupted iterations
+steady_load  ✓ [ 100% ] 50 VUs       2m0s
+ramping_load ✓ [ 100% ] 000/200 VUs  2m30s
