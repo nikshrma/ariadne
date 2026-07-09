@@ -31,23 +31,28 @@ Fixing these issues provided, what I believe to be, the most important insights 
 
 Ariadne is built around a lightweight request processing pipeline inspired by frameworks like Express while implementing each component from scratch using modern C++ and the POSIX sockets API.
 
-```
-TCP Connection
-      │
-      ▼
-HTTP Request Parsing
-      │
-      ▼
-Middleware Pipeline
-      │
-      ▼
-Route Matching
-      │
-      ▼
-Route Handler
-      │
-      ▼
-HTTP Response
+```mermaid
+flowchart TD
+    Client([Client]) -- "TCP Connection" --> Acceptor[Server Socket Acceptor]
+    Acceptor -- "Dispatch Connection" --> ThreadPool{Thread Pool}
+    
+    subgraph Worker [Worker Thread - Connection Owner]
+        direction TB
+        Parse[HTTP Request Parsing]
+        Middleware[Middleware Pipeline]
+        Route[Route Matching]
+        Handler[Route Handler]
+        Response[Send HTTP Response]
+        
+        Parse -->|Request| Middleware
+        Middleware -->|Next| Route
+        Route -->|Dispatch| Handler
+        Handler -->|Generate| Response
+        Response -->|Keep-Alive| Parse
+    end
+    
+    ThreadPool -.->|Assigns| Worker
+    Response -->|Close| End([Close Connection])
 ```
 
 ### Features
