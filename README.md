@@ -35,7 +35,7 @@ Ariadne is built around a lightweight request processing pipeline inspired by fr
 flowchart TD
     Client([Client]) -- "TCP Connection" --> Acceptor[Server Socket Acceptor]
     Acceptor -- "Dispatch Connection" --> ThreadPool{Thread Pool}
-    
+
     subgraph Worker [Worker Thread - Connection Owner]
         direction TB
         Parse[HTTP Request Parsing]
@@ -43,28 +43,29 @@ flowchart TD
         Route[Route Matching]
         Handler[Route Handler]
         Response[Send HTTP Response]
-        
+
         Parse -->|Request| Middleware
         Middleware -->|Next| Route
         Route -->|Dispatch| Handler
         Handler -->|Generate| Response
         Response -->|Keep-Alive| Parse
     end
-    
+
     ThreadPool -.->|Assigns| Worker
     Response -->|Close| End([Close Connection])
 ```
 
 ### Features
 
-- Manual HTTP/1.1 request parsing with support for request headers and Content-Length-based body parsing.
-- Persistent HTTP/1.1 connections (Keep-Alive) with correct connection lifecycle management.
-- Express-inspired routing API supporting GET, POST, PUT, and DELETE handlers.
-- Dynamic route matching with parameterized paths (e.g. /users/:id).
-- Middleware pipeline with support for request interception and early termination.
-- Fluent response API supporting method chaining, custom headers, status codes, and JSON responses.
-- Fixed-size thread pool for concurrent request processing using std::thread, std::mutex, and std::condition_variable.
-- Graceful shutdown of worker threads and active client connections.
+- **Middleware Pipeline**: Implements an Express-style middleware chain using a `Next` callback. Middlewares are executed recursively, allowing for request pre-processing, response mutation, or early short-circuiting before reaching route handlers.
+- **Thread Pool Architecture**: Utilizes a fixed-size thread pool (default 250 threads) backed by a task queue and `std::condition_variable`. New client socket descriptors are enqueued to worker threads, avoiding the overhead of spawning a new thread per connection.
+- **Persistent HTTP/1.1 Connections**: Natively supports HTTP keep-alive. Worker threads process multiple sequential requests over the same socket in a loop, only closing the socket when the client explicitly sends a `Connection: close` header or an idle read timeout (5 seconds) occurs.
+- **Route Parameter Matching**: Supports dynamic path segments prefixed with `:` (e.g., `/api/users/:id`). During request dispatch, paths are split by `/` and any matching dynamic segments are extracted directly into a `req.params` hash map for the handler to consume.
+- **Request and Response API**:
+  - **Request**: Exposes the parsed HTTP method, path, HTTP version, headers, route parameters, and the raw string payload of the body.
+  - **Response**: Exposes a fluent, chainable API (e.g., `res.status(200).set("X-Custom", "Value").send("...")`). It includes convenience methods like `.json()` that automatically configure the appropriate `Content-Type` headers.
+- **HTTP Parsing**: Reads from sockets iteratively. It buffers data until the `\r\n\r\n` boundary is found to separate and parse the request line and headers. It then reads the `Content-Length` header to iteratively pull the exact byte count of the body payload, safely handling large or chunked network reads.
+- **Method-Based Routing**: Provides dedicated routing methods (`get`, `post`, `put`, `remove`) that map HTTP methods and path patterns directly to `std::function` handlers.
 
 ### Example API written in Ariadne
 
