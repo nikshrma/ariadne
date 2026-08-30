@@ -10,6 +10,28 @@ The project is the result of curiosity regarding web frameworks and their low le
 
 Building Ariadne meant implementing these mechanisms myself and also finally uncovering these black boxes that one could easily look over when using frameworks and libraries like Express(Node.js) or net/http(Go).
 
+## Table of Contents
+
+- [Why the name "Ariadne"](#why-the-name-ariadne)
+- [Benchmark Overview](#benchmark-overview)
+- [Framework Overview](#framework-overview)
+  - [Features](#features)
+  - [Example API written in Ariadne](#example-api-written-in-ariadne)
+  - [Repo Structure](#repo-structure)
+- [Benchmark Methodology](#benchmark-methodology)
+  - [Load Scenarios](#load-scenarios)
+- [Phase 1 - Lightweight non-CPU workload](#phase-1---lightweight-non-cpu-workload)
+  - [Results](#results)
+- [HTTP/1.1 Keep-Alive Protocol violation](#http11-keep-alive-protocol-violation)
+  - [What was wrong](#what-was-wrong)
+  - [The Fix](#the-fix)
+- [Phase 2 - CPU-bound Workload and Thread Pool starvation](#phase-2---cpu-bound-workload-and-thread-pool-starvation)
+  - [The Unexpected Result](#the-unexpected-result)
+  - [The Root cause and the Fix](#the-root-cause-and-the-fix)
+- [Final Benchmark Results: Mixed I/O + CPU-Bound Workload](#final-benchmark-results-mixed-io--cpu-bound-workload)
+- [Known limitations](#known-limitations)
+- [Wrapping up](#wrapping-up)
+
 ## Why the name "Ariadne"
 
 In Greek mythology, Ariadne, a Cretan princess, gave the hero Theseus a thread that guided him through the deadly Labyrinth. And to me, the name felt appropriate for an HTTP framework that guides incoming requests to the right handlers. Every request is routed through middleware before reaching its appropriate handler, much like following a thread through a maze.
